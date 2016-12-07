@@ -64,6 +64,7 @@ public class Test_Linear extends LinearOpMode {
     DcMotor rightFrontMotor = null;
     DcMotor rightBackMotor = null;
     DcMotor armMotor = null;
+    DcMotor IntakeMotor = null;
 
     /*
     Servo servo_left;
@@ -93,7 +94,9 @@ public class Test_Linear extends LinearOpMode {
         leftBackMotor = hardwareMap.dcMotor.get("left back motor");
         rightFrontMotor = hardwareMap.dcMotor.get("right front motor");
         rightBackMotor = hardwareMap.dcMotor.get("right back motor");
-        armMotor = hardwareMap.dcMotor.get("arm motor");
+        //armMotor = hardwareMap.dcMotor.get("arm motor");
+        //IntakeMotor = hardwareMap.dcMotor.get("intake motor");
+
         leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
@@ -104,6 +107,7 @@ public class Test_Linear extends LinearOpMode {
         Powerlist[1] = 0.0;
 
         boolean Move = false;
+        boolean IntakeMotorOn=false;
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -113,6 +117,7 @@ public class Test_Linear extends LinearOpMode {
         while (opModeIsActive()) {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //Arm power
+            /*
             if (gamepad1.right_trigger > 0) {
                 armMotor.setPower(gamepad1.right_trigger);
             } else if (gamepad1.left_trigger > 0) {
@@ -120,8 +125,20 @@ public class Test_Linear extends LinearOpMode {
             } else {
                 armMotor.setPower(0);
             }
+            */
+            //Intake motor power
+            if (gamepad1.a){
+                if (IntakeMotorOn==true){
+                    IntakeMotor.setPower(0);
+                    IntakeMotorOn=false;
+                }
+                else if (IntakeMotorOn==false){
+                    IntakeMotor.setPower(1);
+                    IntakeMotorOn=true;
+                }
+            }
 
-            if (-gamepad1.left_stick_y!=0|-gamepad1.right_stick_y!=0){
+            if (-gamepad1.left_stick_y!=0||-gamepad1.right_stick_y!=0){
                 Powerlist[0] = -gamepad1.left_stick_y;
                 Powerlist[1] = -gamepad1.right_stick_y;
                 Drive(Powerlist);
@@ -135,6 +152,8 @@ public class Test_Linear extends LinearOpMode {
             }
 
             telemetry.addData("Instructor", "switch drive mode: X (experimental); LT & RT: arm up/down");
+            telemetry.addData("Left Stick",String.valueOf(-gamepad1.left_stick_y));
+            telemetry.addData("Right Stick",String.valueOf(-gamepad1.right_stick_y));
             telemetry.addData("Left Motor Speed",String.valueOf(Powerlist[0]*100)+"%");
             telemetry.addData("Right Motor Speed",String.valueOf(Powerlist[1]*100)+"%");
 
