@@ -75,35 +75,11 @@ public class Test_Linear extends LinearOpMode {
     public boolean SingleStickDriveMode = false;
     ///public boolean CrewRelease = true;
 
-    private double Speed(double current_speed,double target_speed) {
-        double speed = 0;
-        if (target_speed>0){
-            if (current_speed>target_speed){
-                //Slow Down
-                speed = 1-current_speed*current_speed;
-                if (speed<target_speed){
-                    speed = target_speed;
-                }
-            }
-            else if (current_speed<target_speed) {
-                //Speed Up
-                speed = current_speed * current_speed;
-                if (speed > target_speed) {
-                    speed = target_speed;
-                }
-            }
-        }
-        else{
-            speed = target_speed;
-        }
-        return speed;
-    };
-
     private boolean Drive(double[] Powerlist){
 
         leftFrontMotor.setPower(Powerlist[0]);
         leftBackMotor.setPower(Powerlist[0]);
-        rightFrontMotor.setPower(Powerlist[0]);
+        rightFrontMotor.setPower(Powerlist[1]);
         rightBackMotor.setPower(Powerlist[1]);
 
         return true;
@@ -146,8 +122,8 @@ public class Test_Linear extends LinearOpMode {
             }
 
             if (-gamepad1.left_stick_y!=0|-gamepad1.right_stick_y!=0){
-                Powerlist[0] = Speed(Powerlist[0],-gamepad1.left_stick_y);
-                Powerlist[1] = Speed(Powerlist[1],-gamepad1.right_stick_y);
+                Powerlist[0] = -gamepad1.left_stick_y;
+                Powerlist[1] = -gamepad1.right_stick_y;
                 Drive(Powerlist);
                 Move = true;
             }
