@@ -39,6 +39,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DigitalChannelController;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -66,6 +68,8 @@ public class Test_Linear extends LinearOpMode {
     DcMotor armMotor = null;
     DcMotor IntakeMotor = null;
 
+    DigitalChannel digital = null;
+
     /*
     Servo servo_left;
     Servo servo_right;
@@ -76,19 +80,31 @@ public class Test_Linear extends LinearOpMode {
     public boolean SingleStickDriveMode = false;
     ///public boolean CrewRelease = true;
 
-    private boolean Drive(double[] Powerlist){
-
+    private void Drive(double[] Powerlist){
         leftFrontMotor.setPower(Powerlist[0]);
         leftBackMotor.setPower(Powerlist[0]);
         rightFrontMotor.setPower(Powerlist[1]);
         rightBackMotor.setPower(Powerlist[1]);
-
-        return true;
     };
+    private void ShiftLeft(double[] Powerlist){
+        leftFrontMotor.setPower(Powerlist[0]);
+        leftBackMotor.setPower(-Powerlist[0]);
+        rightFrontMotor.setPower(-Powerlist[1]);
+        rightBackMotor.setPower(Powerlist[1]);
+    };
+    private void ShiftRight(double[] Powerlist){
+        leftFrontMotor.setPower(-Powerlist[0]);
+        leftBackMotor.setPower(Powerlist[0]);
+        rightFrontMotor.setPower(Powerlist[1]);
+        rightBackMotor.setPower(-Powerlist[1]);
+    }
+
 
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry.addData("Status", "Initialized");
+        telemetry.addData("Regist the Gamepad","Hit <Start> plus <> for player 1");
+        telemetry.addData("Instruction", "Left Stick: left motor; Right Stick: right motor; LT & RT: arm up/down");
         //Initialize the motors
         leftFrontMotor = hardwareMap.dcMotor.get("left front motor");
         leftBackMotor = hardwareMap.dcMotor.get("left back motor");
@@ -96,6 +112,9 @@ public class Test_Linear extends LinearOpMode {
         rightBackMotor = hardwareMap.dcMotor.get("right back motor");
         //armMotor = hardwareMap.dcMotor.get("arm motor");
         //IntakeMotor = hardwareMap.dcMotor.get("intake motor");
+
+        digital = hardwareMap.digitalChannel.get("PRIZM");
+        digital.setMode(DigitalChannelController.Mode.OUTPUT);
 
         leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
@@ -129,11 +148,11 @@ public class Test_Linear extends LinearOpMode {
             //Intake motor power
             if (gamepad1.a){
                 if (IntakeMotorOn==true){
-                    IntakeMotor.setPower(0);
+                    digital.setState(true);
                     IntakeMotorOn=false;
                 }
                 else if (IntakeMotorOn==false){
-                    IntakeMotor.setPower(1);
+                    digital.setState(false);
                     IntakeMotorOn=true;
                 }
             }
@@ -143,6 +162,18 @@ public class Test_Linear extends LinearOpMode {
                 Powerlist[1] = -gamepad1.right_stick_y;
                 Drive(Powerlist);
                 Move = true;
+            }
+            else if (gamepad1.left_stick_x!=0&&gamepad1.left_stick_x!=0){
+                Powerlist[0] = 1.0;
+                Powerlist[1] = 1.0;
+                if (gamepad1.left_stick_x>0&&gamepad1.right_stick_x>0){
+                    //Shifting left
+                    ShiftLeft(Powerlist);
+                }
+                else if (-gamepad1.left_stick_x>0&&-gamepad1.right_stick_y>0){
+                    //Shifting right
+                    ShiftRight(Powerlist);
+                }
             }
             else if(Move){
                 Powerlist[0] = 0.0;
