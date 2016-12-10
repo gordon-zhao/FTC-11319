@@ -36,11 +36,15 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.LegacyModule;
+import com.qualcomm.robotcore.hardware.LegacyModulePortDevice;
+import com.qualcomm.robotcore.hardware.LegacyModulePortDeviceImpl;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -66,9 +70,11 @@ public class Test_Linear extends LinearOpMode {
     DcMotor rightFrontMotor = null;
     DcMotor rightBackMotor = null;
     DcMotor armMotor = null;
+    DcMotorController IntakeMotorController;
+    //LegacyModule IntakeMotorController;
     DcMotor IntakeMotor = null;
 
-    DigitalChannel digital = null;
+    //DigitalChannel digital = null;
 
     /*
     Servo servo_left;
@@ -97,7 +103,7 @@ public class Test_Linear extends LinearOpMode {
         leftBackMotor.setPower(Powerlist[0]);
         rightFrontMotor.setPower(Powerlist[1]);
         rightBackMotor.setPower(-Powerlist[1]);
-    }
+    };
 
 
     @Override
@@ -111,11 +117,12 @@ public class Test_Linear extends LinearOpMode {
         rightFrontMotor = hardwareMap.dcMotor.get("right front motor");
         rightBackMotor = hardwareMap.dcMotor.get("right back motor");
         //armMotor = hardwareMap.dcMotor.get("arm motor");
+        IntakeMotorController = hardwareMap.dcMotorController.get("intake motor controller");
+        IntakeMotor = hardwareMap.dcMotor.get("intake motor");
+        IntakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         //IntakeMotor = hardwareMap.dcMotor.get("intake motor");
-
-        digital = hardwareMap.digitalChannel.get("PRIZM");
-        digital.setMode(DigitalChannelController.Mode.OUTPUT);
-
+        //digital = hardwareMap.digitalChannel.get("PRIZM");
+        //digital.setMode(DigitalChannelController.Mode.OUTPUT);
         leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
         leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
         rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
@@ -146,6 +153,7 @@ public class Test_Linear extends LinearOpMode {
             }
             */
             //Intake motor power
+            /*
             if (gamepad1.a){
                 if (IntakeMotorOn==true){
                     digital.setState(true);
@@ -156,6 +164,20 @@ public class Test_Linear extends LinearOpMode {
                     IntakeMotorOn=true;
                 }
             }
+            */
+            //Intake motor
+
+            if (gamepad1.a) {
+                if (IntakeMotorOn == true) {
+                    IntakeMotor.setPower(0);
+                    IntakeMotorOn = false;
+                    TimeUnit.SECONDS.sleep(1);
+                } else if (IntakeMotorOn == false) {
+                    IntakeMotor.setPower(1);
+                    IntakeMotorOn = true;
+                    TimeUnit.SECONDS.sleep(1);
+                }
+            };
 
             if (-gamepad1.left_stick_y!=0||-gamepad1.right_stick_y!=0){
                 Powerlist[0] = -gamepad1.left_stick_y;
@@ -163,24 +185,26 @@ public class Test_Linear extends LinearOpMode {
                 Drive(Powerlist);
                 Move = true;
             }
-            else if (gamepad1.left_stick_x!=0&&gamepad1.left_stick_x!=0){
+            else if (gamepad1.dpad_left){
                 Powerlist[0] = 1.0;
                 Powerlist[1] = 1.0;
-                if (gamepad1.left_stick_x>0&&gamepad1.right_stick_x>0){
-                    //Shifting left
-                    ShiftLeft(Powerlist);
-                }
-                else if (-gamepad1.left_stick_x>0&&-gamepad1.right_stick_y>0){
-                    //Shifting right
-                    ShiftRight(Powerlist);
-                }
+                //Shifting left
+                ShiftLeft(Powerlist);
+                Move = true;
+            }
+            else if (gamepad1.dpad_right){
+                Powerlist[0] = 1.0;
+                Powerlist[1] = 1.0;
+                //Shifting Right
+                ShiftRight(Powerlist);
+                Move = true;
             }
             else if(Move){
                 Powerlist[0] = 0.0;
                 Powerlist[1] = 0.0;
                 Drive(Powerlist);
                 Move = false;
-            }
+            };
 
             telemetry.addData("Instructor", "switch drive mode: X (experimental); LT & RT: arm up/down");
             telemetry.addData("Left Stick",String.valueOf(-gamepad1.left_stick_y));

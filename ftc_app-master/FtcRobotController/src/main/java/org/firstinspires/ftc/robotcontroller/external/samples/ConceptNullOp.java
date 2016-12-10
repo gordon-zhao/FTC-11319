@@ -34,6 +34,7 @@ package org.firstinspires.ftc.robotcontroller.external.samples;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.text.SimpleDateFormat;
@@ -68,6 +69,10 @@ public class ConceptNullOp extends OpMode {
   @Override
   public void start() {
     runtime.reset();
+    DcMotor leftFrontMotor = null;
+    DcMotor leftBackMotor = null;
+    DcMotor rightFrontMotor = null;
+    DcMotor rightBackMotor = null;
   }
 
   /*

@@ -10,7 +10,7 @@ void setup() {
 
   prizm.PrizmBegin();    // initialize PRIZM
 
-  prizm.setMotorInvert(1,1);     // invert the direction of DC Motor 1
+  //prizm.setMotorInvert(1,1);     // invert the direction of DC Motor 1
                                  // to harmonize the direction of opposite facing drive motors
   pinMode(15, INPUT);
   Serial.begin(9600);
