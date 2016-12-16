@@ -95,27 +95,30 @@ public class Autonomous extends LinearOpMode {
         Powerlist[1] = 0.0;
 
         // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.update();
+        telemetry.addData("Status", "Run Time: " + runtime.toString());
+        telemetry.update();
 
-            Powerlist[0] = 1.0;
-            Powerlist[1] = 1.0;
-            runtime.reset();
-            while (runtime.seconds()<11){
-                continue;  //Waiting
-            }
-            runtime.reset();
-            while (runtime.seconds()<4){
-                Drive(Powerlist);
-            }
-
-            Powerlist[0] = 0;
-            Powerlist[1] = 0;
-
-            Drive(Powerlist); // Stop!
-
-            break;
+        Powerlist[0] = 1.0;
+        Powerlist[1] = 1.0;
+        runtime.reset();
+        while (runtime.seconds()<=10){
+            continue;  //Waiting
         }
+        runtime.reset();
+        while (runtime.seconds()<=2){
+            Drive(Powerlist);
+        }
+
+        Powerlist[0] = 0.4;
+        Powerlist[1] = 0.4;
+        runtime.reset();
+        while (runtime.seconds()<=1){
+            Drive(Powerlist);
+        }
+
+        Powerlist[0] = 0;
+        Powerlist[1] = 0;
+
+        Drive(Powerlist); // Stop!
     }
 }
