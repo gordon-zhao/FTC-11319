@@ -32,31 +32,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.LegacyModule;
 import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.LightSensor;
 
 import java.util.concurrent.TimeUnit;
-
-/**
- * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
- * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
- * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a PushBot
- * It includes all the skeletal structure that all linear OpModes contain.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
 
 @TeleOp(name="Manual", group="Test")  // @Autonomous(...) is the other common choice
 // @Disabled
@@ -71,6 +59,10 @@ public class Test_Linear extends LinearOpMode {
     DcMotor armMotor = null;
     DcMotor IntakeMotor = null;
     GyroSensor Gyro = null;
+    ColorSensor LeftColorSensor = null;
+    ColorSensor RightColorSensor = null;
+    LightSensor LeftLightSensor = null;
+    LightSensor RightLightSensor = null;
 
     private void Drive(double[] PowerArray){
         leftFrontMotor.setPower(PowerArray[0]);
@@ -90,25 +82,36 @@ public class Test_Linear extends LinearOpMode {
         rightFrontMotor.setPower(PowerArray[2]);
         rightBackMotor.setPower(-PowerArray[3]);
     };
+    private boolean HitWhiteLine(ColorSensor colorSensor){
+        float hsvValues[] = {0F,0F,0F};
+        Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
+        if (hsvValues[2]>0.94){return true;}
+        else{return false;}
+    }
 
 
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("Regist the Gamepad","Hit <Start> plus <A> for player 1");
+        telemetry.addData("Register the Gamepad","Hit <Start> plus <A> for player 1");
         telemetry.addData("Instruction", "Left Stick: left motor; Right Stick: right motor; LT & RT: arm up/down");
-        //Initialize the motors
+        //Initialize driving motors
         try{
             leftFrontMotor = hardwareMap.dcMotor.get("left front motor");
             leftBackMotor = hardwareMap.dcMotor.get("left back motor");
             rightFrontMotor = hardwareMap.dcMotor.get("right front motor");
             rightBackMotor = hardwareMap.dcMotor.get("right back motor");
+            //Set direction
+            leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+            leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
+            rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+            rightBackMotor.setDirection(DcMotor.Direction.REVERSE);
         }
         catch (Exception E){
             telemetry.addData("Error", E.getMessage());
             throw new InterruptedException();
         };
-        
+        //Initialize arm motor and intake motor
         boolean ArmIntakeMotorInitialized = false;
         try{
             armMotor = hardwareMap.dcMotor.get("arm motor");
@@ -119,7 +122,7 @@ public class Test_Linear extends LinearOpMode {
             telemetry.addData("Warning", "Unable to access Intake motor or Arm motor!");
             telemetry.addData("Error Message",E.getMessage());
         };
-
+        //Initialize Gyro
         boolean GyroInitialized = false;
         try{
             Gyro = hardwareMap.gyroSensor.get("Gyro");
@@ -131,11 +134,40 @@ public class Test_Linear extends LinearOpMode {
             telemetry.addData("Warning", "Unable to access Gyro");
             telemetry.addData("Error Message",E.getMessage());
         };
-
-        leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-        rightBackMotor.setDirection(DcMotor.Direction.REVERSE);
+        //Initialize Color sensor
+        boolean ColorSensorInitialized=false;
+        try{
+            LeftColorSensor = hardwareMap.colorSensor.get("left color sensor");
+            RightColorSensor = hardwareMap.colorSensor.get("right color sensor");
+            //Test Color sensors if connect
+            LeftColorSensor.enableLed(true);
+            RightColorSensor.enableLed(true);
+            TimeUnit.MILLISECONDS.sleep(1000);
+            LeftColorSensor.enableLed(false);
+            RightColorSensor.enableLed(false);
+            ColorSensorInitialized=true;
+        }
+        catch (Exception E){
+            telemetry.addData("Warning", "Unable to access Color sensor, Beacon Assistant is not enable!");
+            telemetry.addData("Error Message",E.getMessage());
+        }
+        //Initialize Light sensor
+        boolean LightSensorInitialized=false;
+        try{
+            LeftLightSensor = hardwareMap.lightSensor.get("left light sensor");
+            RightLightSensor = hardwareMap.lightSensor.get("right light sensor");
+            //Test Light sensors if connect
+            LeftLightSensor.enableLed(true);
+            RightLightSensor.enableLed(true);
+            TimeUnit.MILLISECONDS.sleep(1000);
+            LeftLightSensor.enableLed(false);
+            RightLightSensor.enableLed(false);
+            LightSensorInitialized=true;
+        }
+        catch (Exception E){
+            telemetry.addData("Warning", "Unable to access Light sensor, Beacon Assistant is not enable!");
+            telemetry.addData("Error Message",E.getMessage());
+        };
 
         double[] PowerArray = {
                 0.0,  //Left front
@@ -146,6 +178,9 @@ public class Test_Linear extends LinearOpMode {
 
         boolean Move = false;
         boolean IntakeMotorOn=false;
+        boolean BeaconAssistantSystem = false;
+        boolean EmergencyQuit = false;
+        double EmergencyBreakTime = 0.0;
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -189,34 +224,129 @@ public class Test_Linear extends LinearOpMode {
                     }
                 }
             }
+            if (gamepad1.x){
+                if (ColorSensorInitialized&&LightSensorInitialized){
+                    if (BeaconAssistantSystem){
+                        LeftColorSensor.enableLed(false);
+                        RightColorSensor.enableLed(false);
+                        LeftLightSensor.enableLed(false);
+                        RightLightSensor.enableLed(false);
+                        BeaconAssistantSystem = false;
+                        TimeUnit.MILLISECONDS.sleep(500);
+                    }
+                    else if (!BeaconAssistantSystem){
+                        LeftColorSensor.enableLed(true);
+                        RightColorSensor.enableLed(true);
+                        LeftLightSensor.enableLed(true);
+                        RightLightSensor.enableLed(true);
+                        BeaconAssistantSystem = true;
+                        TimeUnit.MILLISECONDS.sleep(500);
+                    }
+                }
+            }
+
             if (-gamepad1.left_stick_y!=0||-gamepad1.right_stick_y!=0){
-                PowerArray[0] = -gamepad1.left_stick_y;
-                PowerArray[1] = -gamepad1.left_stick_y;
-                PowerArray[2] = -gamepad1.right_stick_y;
-                PowerArray[3] = -gamepad1.right_stick_y;
-                Drive(PowerArray);
-                Move = true;
+                if (!BeaconAssistantSystem) {
+                    PowerArray[0] = -gamepad1.left_stick_y;
+                    PowerArray[1] = -gamepad1.left_stick_y;
+                    PowerArray[2] = -gamepad1.right_stick_y;
+                    PowerArray[3] = -gamepad1.right_stick_y;
+                    Drive(PowerArray);
+                    Move = true;
+                }
+                else if (BeaconAssistantSystem){
+                    //Need to add a escape method!!!
+                    if (EmergencyQuit&&runtime.seconds()>EmergencyBreakTime){
+                        EmergencyBreakTime = 0;
+                        EmergencyQuit = false;
+                    }
+                    else if (EmergencyQuit&&runtime.seconds()<EmergencyBreakTime){
+                        PowerArray[0] = -gamepad1.left_stick_y;
+                        PowerArray[1] = -gamepad1.left_stick_y;
+                        PowerArray[2] = -gamepad1.right_stick_y;
+                        PowerArray[3] = -gamepad1.right_stick_y;
+                        Drive(PowerArray);
+                        Move = true;
+                    }
+                    else if (!EmergencyQuit){
+                        if (HitWhiteLine(LeftColorSensor)) {
+                            while (true) {
+                                if (!gamepad1.atRest()||gamepad1.x){
+                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.0;}
+                                    Drive(PowerArray);
+                                    Move = false;
+                                    EmergencyQuit = true;
+                                    EmergencyBreakTime = runtime.seconds() + 2;
+                                    break;
+                                }
+                                else if (LeftLightSensor.getLightDetected() > 0.9) {
+                                    //Go straight
+                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.35;}
+                                    Drive(PowerArray);
+                                    Move = true;
+                                }
+                                else {
+                                    //Keep adjusting, Left Front Motor Stopped!
+                                    PowerArray[0] = 0.0;
+                                    PowerArray[1] = 0.10;
+                                    PowerArray[2] = 0.35;
+                                    PowerArray[3] = 0.35;
+                                    Drive(PowerArray);
+                                    Move = true;
+                                }
+                            }
+                        }
+                        else if(HitWhiteLine(RightColorSensor)){
+                            while (true) {
+                                if (!gamepad1.atRest()||gamepad1.x){
+                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.0;}
+                                    Drive(PowerArray);
+                                    Move = false;
+                                    EmergencyQuit = true;
+                                    break;
+                                }
+                                else if (RightLightSensor.getLightDetected() > 0.9) {
+                                    //Go straight
+                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.35;}
+                                    Drive(PowerArray);
+                                    Move = true;
+                                }
+                                else {
+                                    //Keep adjusting, Right Front Motor Stopped!
+                                    PowerArray[0] = 0.35;
+                                    PowerArray[1] = 0.35;
+                                    PowerArray[2] = 0.0;
+                                    PowerArray[3] = 0.10;
+                                    Drive(PowerArray);
+                                    Move = true;
+                                }
+                            }
+                        }
+                        else{
+                            PowerArray[0] = -gamepad1.left_stick_y;
+                            PowerArray[1] = -gamepad1.left_stick_y;
+                            PowerArray[2] = -gamepad1.right_stick_y;
+                            PowerArray[3] = -gamepad1.right_stick_y;
+                            Drive(PowerArray);
+                            Move = true;
+                        }
+                    }
+                }
             }
             else if (gamepad1.dpad_left){
-                for (int i=0;i<=3;i++){
-                    PowerArray[i] = 1.0;
-                }
+                for (int i=0;i<=3;i++){PowerArray[i] = 1.0;}
                 //Shifting left
                 ShiftLeft(PowerArray);
                 Move = true;
             }
             else if (gamepad1.dpad_right){
-                for (int i=0;i<=3;i++){
-                    PowerArray[i] = 1.0;
-                }
+                for (int i=0;i<=3;i++){PowerArray[i] = 1.0;}
                 //Shifting Right
                 ShiftRight(PowerArray);
                 Move = true;
             }
             else if(Move){
-                for (int i=0;i<=3;i++){
-                    PowerArray[i] = 0.0;
-                }
+                for (int i=0;i<=3;i++){PowerArray[i] = 0.0;}
                 Drive(PowerArray);
                 Move = false;
             };
