@@ -179,6 +179,7 @@ public class Test_Linear extends LinearOpMode {
         boolean Move = false;
         boolean IntakeMotorOn=false;
         boolean BeaconAssistantSystem = false;
+        int ApproachDirection = 0;
         boolean EmergencyQuit = false;
         double EmergencyBreakTime = 0.0;
 
@@ -259,6 +260,7 @@ public class Test_Linear extends LinearOpMode {
                     if (EmergencyQuit&&runtime.seconds()>EmergencyBreakTime){
                         EmergencyBreakTime = 0;
                         EmergencyQuit = false;
+                        telemetry.addData("Beacon Assiatant Sys","ReActivated!");
                     }
                     else if (EmergencyQuit&&runtime.seconds()<EmergencyBreakTime){
                         PowerArray[0] = -gamepad1.left_stick_y;
@@ -268,67 +270,152 @@ public class Test_Linear extends LinearOpMode {
                         Drive(PowerArray);
                         Move = true;
                     }
-                    else if (!EmergencyQuit){
+                    else if (!EmergencyQuit) {
                         if (HitWhiteLine(LeftColorSensor)) {
+                            //Ask for approach direction
+                            telemetry.addData("Beacon Assistant Sys", "Please select approach direction");
                             while (true) {
-                                if (!gamepad1.atRest()||gamepad1.x){
-                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.0;}
+                                if (gamepad1.dpad_left) {
+                                    ApproachDirection = 1;
+                                    break;
+                                } else if (gamepad1.dpad_right) {
+                                    ApproachDirection = 2;
+                                    break;
+                                }
+                            }
+
+                            while (true) {
+                                if (!gamepad1.atRest() || gamepad1.x) {
+                                    //Escape loop
+                                    for (int i = 0; i <= 3; i++) {
+                                        PowerArray[i] = 0.0;
+                                    }
                                     Drive(PowerArray);
                                     Move = false;
                                     EmergencyQuit = true;
                                     EmergencyBreakTime = runtime.seconds() + 2;
+                                    telemetry.addData("Beacon Assiatant Sys", "Aborted!");
                                     break;
                                 }
-                                else if (LeftLightSensor.getLightDetected() > 0.9) {
+                                if (HitWhiteLine(LeftColorSensor) && LeftLightSensor.getLightDetected() < 0.9) {
+                                    if (ApproachDirection == 1) {
+                                        PowerArray[0] = 0.05;
+                                        PowerArray[1] = 0.10;
+                                        PowerArray[2] = 0.20;
+                                        PowerArray[3] = 0.20;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                    } else if (ApproachDirection == 2) {
+                                        PowerArray[0] = 0.1;
+                                        PowerArray[1] = 0.1;
+                                        PowerArray[2] = 0.05;
+                                        PowerArray[3] = 0.05;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                    }
+                                } else if (!HitWhiteLine(LeftColorSensor) && LeftLightSensor.getLightDetected() > 0.9) {
+                                    if (ApproachDirection == 1) {
+                                        PowerArray[0] = -0.05;
+                                        PowerArray[1] = -0.05;
+                                        PowerArray[2] = 0.1;
+                                        PowerArray[3] = 0.1;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                        ApproachDirection = 2; //Robot on right side
+                                    } else if (ApproachDirection == 2) {
+                                        PowerArray[0] = -0.05;
+                                        PowerArray[1] = -0.05;
+                                        PowerArray[2] = -0.1;
+                                        PowerArray[3] = -0.1;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                        ApproachDirection = 1; //Robot on left side
+                                    }
+                                } else if (HitWhiteLine(LeftColorSensor) && LeftLightSensor.getLightDetected() > 0.9) {
                                     //Go straight
-                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.35;}
+                                    for (int i = 0; i <= 3; i++) {
+                                        PowerArray[i] = 0.35;
+                                    }
                                     Drive(PowerArray);
                                     Move = true;
-                                }
-                                else {
-                                    //Keep adjusting, Left Front Motor Stopped!
-                                    PowerArray[0] = 0.0;
-                                    PowerArray[1] = 0.10;
-                                    PowerArray[2] = 0.35;
-                                    PowerArray[3] = 0.35;
-                                    Drive(PowerArray);
-                                    Move = true;
+                                } else {
+                                    //Situation that Robot rush out of the track during adjusting
+                                    continue;
                                 }
                             }
                         }
-                        else if(HitWhiteLine(RightColorSensor)){
+                        else if (HitWhiteLine(RightColorSensor)) {
+                            //Ask for approach direction
+                            telemetry.addData("Beacon Assistant Sys", "Please select approach direction");
                             while (true) {
-                                if (!gamepad1.atRest()||gamepad1.x){
-                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.0;}
+                                if (gamepad1.dpad_left) {
+                                    ApproachDirection = 1;
+                                    break;
+                                } else if (gamepad1.dpad_right) {
+                                    ApproachDirection = 2;
+                                    break;
+                                }
+                            }
+
+                            while (true) {
+                                if (!gamepad1.atRest() || gamepad1.x) {
+                                    //Escape loop
+                                    for (int i = 0; i <= 3; i++) {
+                                        PowerArray[i] = 0.0;
+                                    }
                                     Drive(PowerArray);
                                     Move = false;
                                     EmergencyQuit = true;
+                                    EmergencyBreakTime = runtime.seconds() + 2;
+                                    telemetry.addData("Beacon Assiatant Sys", "Aborted!");
                                     break;
                                 }
-                                else if (RightLightSensor.getLightDetected() > 0.9) {
+                                if (HitWhiteLine(RightColorSensor) && RightLightSensor.getLightDetected() < 0.9) {
+                                    if (ApproachDirection == 1) {
+                                        PowerArray[0] = 0.05;
+                                        PowerArray[1] = 0.10;
+                                        PowerArray[2] = 0.20;
+                                        PowerArray[3] = 0.20;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                    } else if (ApproachDirection == 2) {
+                                        PowerArray[0] = 0.1;
+                                        PowerArray[1] = 0.1;
+                                        PowerArray[2] = 0.05;
+                                        PowerArray[3] = 0.05;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                    }
+                                } else if (!HitWhiteLine(RightColorSensor) && RightLightSensor.getLightDetected() > 0.9) {
+                                    if (ApproachDirection == 1) {
+                                        PowerArray[0] = -0.05;
+                                        PowerArray[1] = -0.05;
+                                        PowerArray[2] = 0.1;
+                                        PowerArray[3] = 0.1;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                        ApproachDirection = 2; //Robot on right side
+                                    } else if (ApproachDirection == 2) {
+                                        PowerArray[0] = -0.05;
+                                        PowerArray[1] = -0.05;
+                                        PowerArray[2] = -0.1;
+                                        PowerArray[3] = -0.1;
+                                        Drive(PowerArray);
+                                        Move = true;
+                                        ApproachDirection = 1; //Robot on left side
+                                    }
+                                } else if (HitWhiteLine(RightColorSensor) && RightLightSensor.getLightDetected() > 0.9) {
                                     //Go straight
-                                    for (int i=0;i<=3;i++){PowerArray[i] = 0.35;}
+                                    for (int i = 0; i <= 3; i++) {
+                                        PowerArray[i] = 0.35;
+                                    }
                                     Drive(PowerArray);
                                     Move = true;
-                                }
-                                else {
-                                    //Keep adjusting, Right Front Motor Stopped!
-                                    PowerArray[0] = 0.35;
-                                    PowerArray[1] = 0.35;
-                                    PowerArray[2] = 0.0;
-                                    PowerArray[3] = 0.10;
-                                    Drive(PowerArray);
-                                    Move = true;
+                                } else {
+                                    //Situation that Robot rush out of the track during adjusting
+                                    continue;
                                 }
                             }
-                        }
-                        else{
-                            PowerArray[0] = -gamepad1.left_stick_y;
-                            PowerArray[1] = -gamepad1.left_stick_y;
-                            PowerArray[2] = -gamepad1.right_stick_y;
-                            PowerArray[3] = -gamepad1.right_stick_y;
-                            Drive(PowerArray);
-                            Move = true;
                         }
                     }
                 }
