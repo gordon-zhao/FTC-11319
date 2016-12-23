@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -40,6 +42,7 @@ import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.sql.Time;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,13 +74,24 @@ public class Red_side extends LinearOpMode {
     ColorSensor RightColorSensor = null;
     LightSensor LeftLightSensor = null;
     LightSensor RightLightSensor = null;
-    UltrasonicSensor FrontDistanceSensor = null;
+    UltrasonicSensor FrontUltrasonicSensor = null;
 
     private void Drive(double[] Powerlist){
         leftFrontMotor.setPower(Powerlist[0]);
         leftBackMotor.setPower(Powerlist[0]);
         rightFrontMotor.setPower(Powerlist[1]);
         rightBackMotor.setPower(Powerlist[1]);
+    };
+    private void ShiftLeft(double[] PowerArray){
+        leftFrontMotor.setPower(PowerArray[0]);
+        leftBackMotor.setPower(-PowerArray[1]);
+        rightFrontMotor.setPower(-PowerArray[2]);
+        rightBackMotor.setPower(PowerArray[3]);
+    };
+    private boolean HitWhiteLine(ColorSensor colorSensor){
+        float hsvValues[] = {0F,0F,0F};
+        Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
+        return hsvValues[2]>0.94;
     };
 
     @Override
@@ -163,8 +177,8 @@ public class Red_side extends LinearOpMode {
         //Initialize Ultrasonic distance sensor
         boolean UltrasonicSensorInitialized = false;
         try{
-            FrontDistanceSensor = hardwareMap.ultrasonicSensor.get("distance sensor");
-            if (FrontDistanceSensor.getUltrasonicLevel()>=0.0){
+            FrontUltrasonicSensor = hardwareMap.ultrasonicSensor.get("distance sensor");
+            if (FrontUltrasonicSensor.getUltrasonicLevel()>=0.0){
                 UltrasonicSensorInitialized = true;
                 telemetry.addData("Ultrasonic sensor","Initialized");
             }
@@ -189,6 +203,39 @@ public class Red_side extends LinearOpMode {
         if (ColorSensorInitialized&&LightSensorInitialized){
             if (UltrasonicSensorInitialized){
                 //Go do the beacon with ultrasonic sensor
+                for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
+                Drive(PowerArray);
+                TimeUnit.MILLISECONDS.sleep(750);
+                for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
+                Drive(PowerArray);
+                //Turn Right
+                PowerArray[0] = 0.35;
+                PowerArray[1] = 0.35;
+                PowerArray[3] = 0.2;
+                Drive(PowerArray);
+                TimeUnit.MILLISECONDS.sleep(500); //Need to adjust the time!
+                for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
+                Drive(PowerArray);
+                //Go straight until hit the wall
+                for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
+                Drive(PowerArray);
+                while (FrontUltrasonicSensor.getUltrasonicLevel()>25){};
+                for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
+                Drive(PowerArray);
+                //Shift left until hit white line
+                for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
+                ShiftLeft(PowerArray);
+                while (!HitWhiteLine(LeftColorSensor)){}
+                /*
+                *
+                *
+                *
+                *
+                * I'm Tired! Wait for my next update!
+                *
+                *
+                *
+                * */
                 Task1Complete = true;
             }
             else if (!UltrasonicSensorInitialized){
