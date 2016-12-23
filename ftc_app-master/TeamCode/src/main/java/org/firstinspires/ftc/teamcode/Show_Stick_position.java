@@ -51,7 +51,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Gamepad test", group="Test")  // @Autonomous(...) is the other common choice
+@TeleOp(name="Gamepad test", group="Test")  // @Red_side(...) is the other common choice
 @Disabled
 public class Show_Stick_position extends LinearOpMode {
 

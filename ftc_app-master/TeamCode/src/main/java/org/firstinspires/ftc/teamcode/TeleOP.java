@@ -34,21 +34,23 @@ package org.firstinspires.ftc.teamcode;
 
 import android.graphics.Color;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.LightSensor;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@TeleOp(name="Manual", group="Test")  // @Autonomous(...) is the other common choice
+import static java.lang.Math.E;
+
+@TeleOp(name="Manual", group="Test")  // @Red_side(...) is the other common choice
 // @Disabled
-public class Test_Linear extends LinearOpMode {
+public class TeleOP extends LinearOpMode {
 
     /* Declare OpMode members. */
     private ElapsedTime runtime = new ElapsedTime();
@@ -63,6 +65,7 @@ public class Test_Linear extends LinearOpMode {
     ColorSensor RightColorSensor = null;
     LightSensor LeftLightSensor = null;
     LightSensor RightLightSensor = null;
+    private Map<String,String> PrintOut = new HashMap<>();
 
     private void Drive(double[] PowerArray){
         leftFrontMotor.setPower(PowerArray[0]);
@@ -85,16 +88,22 @@ public class Test_Linear extends LinearOpMode {
     private boolean HitWhiteLine(ColorSensor colorSensor){
         float hsvValues[] = {0F,0F,0F};
         Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
-        if (hsvValues[2]>0.94){return true;}
-        else{return false;}
-    }
+        return hsvValues[2]>0.94;
+    };
+    private boolean ConsoleOutputUpdate(Map<String,String> Context){
+        for (String Key : Context.keySet()){
+            telemetry.addData(Key,Context.get(Key));
+        }
+        telemetry.update();
+        return true;
+    };
 
 
     @Override
     public void runOpMode() throws InterruptedException {
-        telemetry.addData("Status", "Initialized");
-        telemetry.addData("Register the Gamepad","Hit <Start> plus <A> for player 1");
-        telemetry.addData("Instruction", "Left Stick: left motor; Right Stick: right motor; LT & RT: arm up/down");
+        PrintOut.put("Register the Gamepad","Hit <Start> plus <A> for player 1");
+        PrintOut.put("Instruction", "Left Stick: left motor; Right Stick: right motor; LT & RT: arm up/down");
+        ConsoleOutputUpdate(PrintOut);
         //Initialize driving motors
         try{
             leftFrontMotor = hardwareMap.dcMotor.get("left front motor");
@@ -106,6 +115,7 @@ public class Test_Linear extends LinearOpMode {
             leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
             rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
             rightBackMotor.setDirection(DcMotor.Direction.REVERSE);
+            telemetry.addData("Motors","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Error", E.getMessage());
@@ -117,6 +127,7 @@ public class Test_Linear extends LinearOpMode {
             armMotor = hardwareMap.dcMotor.get("arm motor");
             IntakeMotor = hardwareMap.dcMotor.get("intake motor");
             ArmIntakeMotorInitialized = true;
+            telemetry.addData("Shooter","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Warning", "Unable to access Intake motor or Arm motor!");
@@ -129,6 +140,7 @@ public class Test_Linear extends LinearOpMode {
             Gyro.calibrate();
             TimeUnit.MILLISECONDS.sleep(1500);
             GyroInitialized = true;
+            telemetry.addData("Gyro sensor","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Warning", "Unable to access Gyro");
@@ -146,6 +158,7 @@ public class Test_Linear extends LinearOpMode {
             LeftColorSensor.enableLed(false);
             RightColorSensor.enableLed(false);
             ColorSensorInitialized=true;
+            telemetry.addData("Color sensors","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Warning", "Unable to access Color sensor, Beacon Assistant is not enable!");
@@ -163,6 +176,7 @@ public class Test_Linear extends LinearOpMode {
             LeftLightSensor.enableLed(false);
             RightLightSensor.enableLed(false);
             LightSensorInitialized=true;
+            telemetry.addData("Light sensors","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Warning", "Unable to access Light sensor, Beacon Assistant is not enable!");
@@ -184,11 +198,19 @@ public class Test_Linear extends LinearOpMode {
         double EmergencyBreakTime = 0.0;
 
         // Wait for the game to start (driver presses PLAY)
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
         waitForStart();
         runtime.reset();
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            PrintOut.put("Status", "Run Time: " + runtime.toString());
+            PrintOut.put("Instructor", "switch drive mode: X (experimental); LT & RT: arm up/down");
+            PrintOut.put("Left Stick",String.valueOf(-gamepad1.left_stick_y));
+            PrintOut.put("Right Stick",String.valueOf(-gamepad1.right_stick_y));
+            PrintOut.put("Left Motor Speed",String.valueOf(PowerArray[0]*100)+"%");
+            PrintOut.put("Right Motor Speed",String.valueOf(PowerArray[2]*100)+"%");
+            ConsoleOutputUpdate(PrintOut);
             //Arm power
             if (gamepad1.right_trigger > 0) {
                 armMotor.setPower(gamepad1.right_trigger);
@@ -233,6 +255,8 @@ public class Test_Linear extends LinearOpMode {
                         LeftLightSensor.enableLed(false);
                         RightLightSensor.enableLed(false);
                         BeaconAssistantSystem = false;
+                        PrintOut.put("Beacon Assistant Sys","Off");
+                        ConsoleOutputUpdate(PrintOut);
                         TimeUnit.MILLISECONDS.sleep(500);
                     }
                     else if (!BeaconAssistantSystem){
@@ -241,6 +265,8 @@ public class Test_Linear extends LinearOpMode {
                         LeftLightSensor.enableLed(true);
                         RightLightSensor.enableLed(true);
                         BeaconAssistantSystem = true;
+                        PrintOut.put("Beacon Assistant Sys","On");
+                        ConsoleOutputUpdate(PrintOut);
                         TimeUnit.MILLISECONDS.sleep(500);
                     }
                 }
@@ -248,10 +274,10 @@ public class Test_Linear extends LinearOpMode {
 
             if (-gamepad1.left_stick_y!=0||-gamepad1.right_stick_y!=0){
                 if (!BeaconAssistantSystem) {
-                    PowerArray[0] = -gamepad1.left_stick_y;
-                    PowerArray[1] = -gamepad1.left_stick_y;
-                    PowerArray[2] = -gamepad1.right_stick_y;
-                    PowerArray[3] = -gamepad1.right_stick_y;
+                    PowerArray[0] = -Math.pow((gamepad1.left_stick_y),3)/2;
+                    PowerArray[1] = -Math.pow((gamepad1.left_stick_y),3)/2;
+                    PowerArray[2] = -Math.pow((gamepad1.right_stick_y),3)/2;
+                    PowerArray[3] = -Math.pow((gamepad1.right_stick_y),3)/2;
                     Drive(PowerArray);
                     Move = true;
                 }
@@ -260,20 +286,22 @@ public class Test_Linear extends LinearOpMode {
                     if (EmergencyQuit&&runtime.seconds()>EmergencyBreakTime){
                         EmergencyBreakTime = 0;
                         EmergencyQuit = false;
-                        telemetry.addData("Beacon Assiatant Sys","ReActivated!");
+                        PrintOut.put("Beacon Assiatant Sys","ReActivated!");
+                        ConsoleOutputUpdate(PrintOut);
                     }
                     else if (EmergencyQuit&&runtime.seconds()<EmergencyBreakTime){
-                        PowerArray[0] = -gamepad1.left_stick_y;
-                        PowerArray[1] = -gamepad1.left_stick_y;
-                        PowerArray[2] = -gamepad1.right_stick_y;
-                        PowerArray[3] = -gamepad1.right_stick_y;
+                        PowerArray[0] = -Math.pow((gamepad1.left_stick_y),3)/2;
+                        PowerArray[1] = -Math.pow((gamepad1.left_stick_y),3)/2;
+                        PowerArray[2] = -Math.pow((gamepad1.right_stick_y),3)/2;
+                        PowerArray[3] = -Math.pow((gamepad1.right_stick_y),3)/2;
                         Drive(PowerArray);
                         Move = true;
                     }
                     else if (!EmergencyQuit) {
                         if (HitWhiteLine(LeftColorSensor)) {
                             //Ask for approach direction
-                            telemetry.addData("Beacon Assistant Sys", "Please select approach direction");
+                            PrintOut.put("Beacon Assistant Sys", "Please select approach direction");
+                            ConsoleOutputUpdate(PrintOut);
                             while (true) {
                                 if (gamepad1.dpad_left) {
                                     ApproachDirection = 1;
@@ -294,7 +322,8 @@ public class Test_Linear extends LinearOpMode {
                                     Move = false;
                                     EmergencyQuit = true;
                                     EmergencyBreakTime = runtime.seconds() + 2;
-                                    telemetry.addData("Beacon Assiatant Sys", "Aborted!");
+                                    PrintOut.put("Beacon Assiatant Sys", "Aborted!");
+                                    ConsoleOutputUpdate(PrintOut);
                                     break;
                                 }
                                 if (HitWhiteLine(LeftColorSensor) && LeftLightSensor.getLightDetected() < 0.9) {
@@ -340,13 +369,18 @@ public class Test_Linear extends LinearOpMode {
                                     Move = true;
                                 } else {
                                     //Situation that Robot rush out of the track during adjusting
-                                    continue;
+                                    //Now just head back and redo
+                                    for (int i = 0;i <= 3;i++){
+                                        PowerArray[i] = -PowerArray[i];
+                                    }
+                                    TimeUnit.MILLISECONDS.sleep(500);
                                 }
                             }
                         }
                         else if (HitWhiteLine(RightColorSensor)) {
                             //Ask for approach direction
-                            telemetry.addData("Beacon Assistant Sys", "Please select approach direction");
+                            PrintOut.put("Beacon Assistant Sys", "Please select approach direction");
+                            ConsoleOutputUpdate(PrintOut);
                             while (true) {
                                 if (gamepad1.dpad_left) {
                                     ApproachDirection = 1;
@@ -367,7 +401,8 @@ public class Test_Linear extends LinearOpMode {
                                     Move = false;
                                     EmergencyQuit = true;
                                     EmergencyBreakTime = runtime.seconds() + 2;
-                                    telemetry.addData("Beacon Assiatant Sys", "Aborted!");
+                                    PrintOut.put("Beacon Assiatant Sys", "Aborted!");
+                                    ConsoleOutputUpdate(PrintOut);
                                     break;
                                 }
                                 if (HitWhiteLine(RightColorSensor) && RightLightSensor.getLightDetected() < 0.9) {
@@ -413,7 +448,11 @@ public class Test_Linear extends LinearOpMode {
                                     Move = true;
                                 } else {
                                     //Situation that Robot rush out of the track during adjusting
-                                    continue;
+                                    //Now just head back and redo
+                                    for (int i = 0;i <= 3;i++){
+                                        PowerArray[i] = -PowerArray[i];
+                                    }
+                                    TimeUnit.MILLISECONDS.sleep(500);
                                 }
                             }
                         }
@@ -437,14 +476,6 @@ public class Test_Linear extends LinearOpMode {
                 Drive(PowerArray);
                 Move = false;
             };
-
-            telemetry.addData("Instructor", "switch drive mode: X (experimental); LT & RT: arm up/down");
-            telemetry.addData("Left Stick",String.valueOf(-gamepad1.left_stick_y));
-            telemetry.addData("Right Stick",String.valueOf(-gamepad1.right_stick_y));
-            telemetry.addData("Left Motor Speed",String.valueOf(PowerArray[0]*100)+"%");
-            telemetry.addData("Right Motor Speed",String.valueOf(PowerArray[2]*100)+"%");
-
-            telemetry.update();
             idle(); // Always call idle() at the bottom of your while(opModeIsActive()) loop
         }
     }
