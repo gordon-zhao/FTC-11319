@@ -76,6 +76,18 @@ public class Red_side extends LinearOpMode {
     LightSensor RightLightSensor = null;
     UltrasonicSensor FrontUltrasonicSensor = null;
 
+    //Car dimensions and locations of color sensors and light sensors
+    int CarWidth = 0;
+    int CarLength = 0;
+    int LeftColorSensorX = 0;
+    int LeftColorSensorY = 0;
+    int RightColorSensorX = 0;
+    int RightColorSensorY = 0;
+    int LeftLightSensorX = 0;
+    int LeftLightSensorY = 0;
+    int RightLightSensorX = 0;
+    int RightLightSensorY = 0;
+
     private void Drive(double[] Powerlist){
         leftFrontMotor.setPower(Powerlist[0]);
         leftBackMotor.setPower(Powerlist[0]);
@@ -87,6 +99,12 @@ public class Red_side extends LinearOpMode {
         leftBackMotor.setPower(-PowerArray[1]);
         rightFrontMotor.setPower(-PowerArray[2]);
         rightBackMotor.setPower(PowerArray[3]);
+    };
+    private void ShiftRight(double[] PowerArray){
+        leftFrontMotor.setPower(-PowerArray[0]);
+        leftBackMotor.setPower(PowerArray[1]);
+        rightFrontMotor.setPower(PowerArray[2]);
+        rightBackMotor.setPower(-PowerArray[3]);
     };
     private boolean HitWhiteLine(ColorSensor colorSensor){
         float hsvValues[] = {0F,0F,0F};
@@ -174,6 +192,13 @@ public class Red_side extends LinearOpMode {
             telemetry.addData("Warning", "Unable to access Light sensor!");
             telemetry.addData("Error Message",E.getMessage());
         };
+        if (ColorSensorInitialized&&LightSensorInitialized){
+            //Calculate the specific scale of speed
+            double[] LeftColorSensorBased = {0,0,0,0};
+            double[] RightColorSensorBased = {0,0,0,0};
+            double[] LeftLightSensorBased = {0,0,0,0};
+            double[] RightLightSensorBased = {0,0,0,0};
+        }
         //Initialize Ultrasonic distance sensor
         boolean UltrasonicSensorInitialized = false;
         try{
@@ -225,18 +250,91 @@ public class Red_side extends LinearOpMode {
                 //Shift left until hit white line
                 for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
                 ShiftLeft(PowerArray);
-                while (!HitWhiteLine(LeftColorSensor)){}
+                double begin_time = runtime.seconds();
+                boolean HeadingLeft = true;
+                boolean RightSideOfLine = true;
+                int BeaconIndex = 1;
+                boolean RightColorSensorDetectedLine = false;
+                boolean RightLightSensorDetectedLine = false;
+                boolean LeftColorSensorDetectedLine = false;
+                boolean LeftLightSensorDetectedLine = false;
+                int RetryCount = 0;
+                while (true){
+                    if (HitWhiteLine(LeftColorSensor)){
+                        LeftColorSensorDetectedLine = true;
+                        if (HeadingLeft) {
+                            //Park the back, toward left
+                            PowerArray[0] = 0.0;
+                            PowerArray[1] = -0.1;
+                            PowerArray[2] = -0.35;
+                            PowerArray[3] = -0.35;
+                        }
+                        else if (!HeadingLeft){
+                            //Park the back, toward right
+                            PowerArray[0] = 0.0;
+                            PowerArray[1] = 0.1;
+                            PowerArray[2] = 0.35;
+                            PowerArray[3] = 0.35;
+                        }
+                        Drive(PowerArray);
+                        while (LeftLightSensor.getLightDetected() < 0.9){};
+                        for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
+                        Drive(PowerArray);
+                        break;
+                    }
+                    else if (HitWhiteLine(RightColorSensor)){
+                        RightColorSensorDetectedLine = true;
+                        if (HeadingLeft){
+                            //Already run pass the white line
+                        }
+                    }
+                    else if (LeftLightSensor.getLightDetected() > 0.9){
+                        LeftLightSensorDetectedLine = true;
+                        if (HeadingLeft&&!LeftColorSensorDetectedLine) {
+                            //Car head right, on the left side of the line, and head needs to shift left to straight up
+                        }
+                        else if (!HeadingLeft&&!LeftColorSensorDetectedLine){
+                            //Car head left, on the left side of the line, and head needs to shift right to straight up
+                        }
+                    }
+                    else if (RightLightSensor.getLightDetected() > 0.9){
+                        RightLightSensorDetectedLine = true;
+                        if (HeadingLeft&&RightColorSensorDetectedLine){
+                            //The car pass the line with head towards left
+                        }
+                        else if (HeadingLeft&&!RightColorSensorDetectedLine){
+                            //The car is on the left hand side of the line, and head right
+                        }
+                    }
+                    else if (runtime.seconds() - begin_time >4&&RetryCount<3){
+                        //Reset and run a little bit forward, then move again
+                        RightColorSensorDetectedLine = false;
+                        RightLightSensorDetectedLine = false;
+                        LeftColorSensorDetectedLine = false;
+                        LeftLightSensorDetectedLine = false;
+                        for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
+                        Drive(PowerArray);
+                        TimeUnit.MILLISECONDS.sleep(500);
+                        if (HeadingLeft){
+                            ShiftRight(PowerArray);
+                            HeadingLeft = false;
+                        }
+                        else if (!HeadingLeft){
+                            ShiftLeft(PowerArray);
+                            HeadingLeft = true;
+                        }
+                        RetryCount+=1;
+                    }
+                    else if (RetryCount>3){
+                        break;
+                    }
+                }
                 /*
-                *
-                *
-                *
-                *
-                * I'm Tired! Wait for my next update!
-                *
-                *
-                *
-                * */
-                Task1Complete = true;
+                *Block for color recognition
+                */
+                if (RetryCount<3) {
+                    Task1Complete = true;
+                }
             }
             else if (!UltrasonicSensorInitialized){
                 if (GyroInitialized){
