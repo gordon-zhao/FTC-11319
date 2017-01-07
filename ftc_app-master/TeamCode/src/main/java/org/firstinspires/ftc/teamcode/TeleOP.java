@@ -55,7 +55,7 @@ public class TeleOP extends LinearOpMode {
     protected DcMotor leftBackMotor = null;
     protected DcMotor rightFrontMotor = null;
     protected DcMotor rightBackMotor = null;
-    protected DcMotor armMotor = null;
+    //protected DcMotor armMotor = null;
     protected DcMotor intakeMotor = null;
 
     // gyro
@@ -130,14 +130,13 @@ public class TeleOP extends LinearOpMode {
         }
     }
 
-    private boolean initArmMotor() {
+    private boolean initIntakeMotor() {
         try {
-            armMotor = hardwareMap.dcMotor.get("arm motor");
             intakeMotor = hardwareMap.dcMotor.get("intake motor");
-            telemetry.addData("Shooter", "Initialized");
+            telemetry.addData("Intaker", "Initialized");
             return true;
         } catch (Exception e) {
-            telemetry.addData("Error", "Unable to access Intake motor or Arm motor!");
+            telemetry.addData("Error", "Unable to access Intake motor!");
             telemetry.addData("Error Message", e.getMessage());
             return false;
         }
@@ -204,9 +203,9 @@ public class TeleOP extends LinearOpMode {
         }
     }
 
-    private boolean runIntakeMotor(boolean isArmIntake, boolean isIntakeOn, boolean SpinForward) {
+    private boolean runIntakeMotor(boolean isIntake, boolean isIntakeOn, boolean SpinForward) {
         //Intake motor power
-        if (isArmIntake) {
+        if (isIntake) {
             if (!isIntakeOn) {
                 if (SpinForward) {
                     intakeMotor.setPower(1);
@@ -259,7 +258,7 @@ public class TeleOP extends LinearOpMode {
         // Initialize wheel motors
         initMotors();
         //Initialize arm motor and intake motor
-        boolean isArmIntake = initArmMotor();
+        boolean isIntake = initIntakeMotor();
         //Initialize gyro
         boolean isGyro = initGyro();
         //Initialize Color sensor
@@ -298,16 +297,17 @@ public class TeleOP extends LinearOpMode {
             printOut.put("Right Motor Speed", String.valueOf(power[2] * 100) + "%");
             print(printOut);
 
-            if (isArmIntake){
+            /* Since there is no arm motor, disable it
+            if (isIntake){
                 armMotor.setPower((gamepad1.right_trigger > 0) ? (gamepad1.right_trigger) :
                     (- gamepad1.left_trigger));
             }
-
+            */
             //Intake motor power
             if (gamepad1.a){
-                isIntakeOn = runIntakeMotor(isArmIntake, isIntakeOn, true);
+                isIntakeOn = runIntakeMotor(isIntake, isIntakeOn, true);
             }else if (gamepad1.b){
-                isIntakeOn = runIntakeMotor(isArmIntake, isIntakeOn, false);
+                isIntakeOn = runIntakeMotor(isIntake, isIntakeOn, false);
             }
 
             //Beacon Assistant System Control
