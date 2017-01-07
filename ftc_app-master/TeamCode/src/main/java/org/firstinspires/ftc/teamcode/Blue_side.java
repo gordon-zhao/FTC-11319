@@ -111,17 +111,17 @@ public class Blue_side extends LinearOpMode {
             telemetry.addData("Warning", "Unable to access Intake motor or Arm motor!");
             telemetry.addData("Error Message",E.getMessage());
         };
-        //Initialize Gyro
+        //Initialize gyro
         boolean GyroInitialized = false;
         try{
-            Gyro = hardwareMap.gyroSensor.get("Gyro");
+            Gyro = hardwareMap.gyroSensor.get("gyro");
             Gyro.calibrate();
             TimeUnit.MILLISECONDS.sleep(1500);
             GyroInitialized = true;
-            telemetry.addData("Gyro sensor","Initialized");
+            telemetry.addData("gyro sensor","Initialized");
         }
         catch (Exception E){
-            telemetry.addData("Warning", "Unable to access Gyro");
+            telemetry.addData("Warning", "Unable to access gyro");
             telemetry.addData("Error Message",E.getMessage());
         };
         //Initialize Color sensor

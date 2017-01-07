@@ -58,7 +58,7 @@ public class TeleOP extends LinearOpMode {
     protected DcMotor armMotor = null;
     protected DcMotor intakeMotor = null;
 
-    // Gyro
+    // gyro
     protected GyroSensor gyro = null;
 
     // Sensors
@@ -108,6 +108,28 @@ public class TeleOP extends LinearOpMode {
         telemetry.update();
     }
 
+    private boolean initMotors(){
+        try {
+            //Initialize driving motors
+            leftFrontMotor = hardwareMap.dcMotor.get("left front motor");
+            leftBackMotor = hardwareMap.dcMotor.get("left back motor");
+            rightFrontMotor = hardwareMap.dcMotor.get("right front motor");
+            rightBackMotor = hardwareMap.dcMotor.get("right back motor");
+            //Set direction
+            leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
+            leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
+            rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+            rightBackMotor.setDirection(DcMotor.Direction.REVERSE);
+            telemetry.addData("Motors", "Initialized");
+            return true;
+        }
+        catch(Exception e){
+            telemetry.addData("Motor","Motor is not Initialized!");
+            telemetry.addData("Error message",e.getMessage());
+            throw e;
+        }
+    }
+
     private boolean initArmMotor() {
         try {
             armMotor = hardwareMap.dcMotor.get("arm motor");
@@ -121,7 +143,7 @@ public class TeleOP extends LinearOpMode {
         }
     }
 
-    private boolean initgyro() {
+    private boolean initGyro() {
         try {
             gyro = hardwareMap.gyroSensor.get("gyro");
             gyro.calibrate();
@@ -182,62 +204,51 @@ public class TeleOP extends LinearOpMode {
         }
     }
 
-    private void runIntakeMotor(boolean isArmIntake, boolean isIntakeMotor) {
-
+    private boolean runIntakeMotor(boolean isArmIntake, boolean isIntakeOn, boolean SpinForward) {
         //Intake motor power
-        if (gamepad1.a) {
-            if (isArmIntake) {
-                if (!isIntakeMotor) {
+        if (isArmIntake) {
+            if (!isIntakeOn) {
+                if (SpinForward) {
                     intakeMotor.setPower(1);
-                    isIntakeMotor = true;
                     sleep(500);
-                } else if (isIntakeMotor) {
-                    intakeMotor.setPower(0);
-                    isIntakeMotor = false;
-                    sleep(500);
-                }
-            }
-        } else if (gamepad1.b) {
-            if (isArmIntake) {
-                if (!isIntakeMotor) {
+                    return true;
+                } else if (!SpinForward) {
                     intakeMotor.setPower(-1);
-                    isIntakeMotor = true;
                     sleep(500);
-                } else if (isIntakeMotor) {
-                    intakeMotor.setPower(0);
-                    isIntakeMotor = false;
-                    sleep(500);
+                    return true;
+                }
+            }else if (isIntakeOn) {
+                intakeMotor.setPower(0);
+                sleep(500);
+                return false;
                 }
             }
-        }
+        return false;
     }
 
-    private void runLightSensors(boolean isColorSensor, boolean isLightSensor, boolean beaconAssistantSystem) {
-
-        if (gamepad1.x) {
-            if (isColorSensor && isLightSensor) {
-                if (beaconAssistantSystem) {
-                    leftColorSensor.enableLed(false);
-                    rightColorSensor.enableLed(false);
-                    leftLightSensor.enableLed(false);
-                    rightLightSensor.enableLed(false);
-                    beaconAssistantSystem = false;
-                    printOut.put("Beacon Assistant Sys", "Off");
-                    print(printOut);
-                    sleep(500);
-                } else if (!beaconAssistantSystem) {
-                    leftColorSensor.enableLed(true);
-                    rightColorSensor.enableLed(true);
-                    leftLightSensor.enableLed(true);
-                    rightLightSensor.enableLed(true);
-                    beaconAssistantSystem = true;
-                    printOut.put("Beacon Assistant Sys", "On");
-                    print(printOut);
-                    sleep(500);
-                }
+    private boolean beaconAssistantSystem(boolean isColorSensor, boolean isLightSensor, boolean isBeaconAssistantSystem) {
+        if (isColorSensor && isLightSensor) {
+            if (isBeaconAssistantSystem) {
+                leftColorSensor.enableLed(false);
+                rightColorSensor.enableLed(false);
+                leftLightSensor.enableLed(false);
+                rightLightSensor.enableLed(false);
+                printOut.put("Beacon Assistant Sys", "Off");
+                print(printOut);
+                sleep(500);
+                return false;
+            } else if (!isBeaconAssistantSystem) {
+                leftColorSensor.enableLed(true);
+                rightColorSensor.enableLed(true);
+                leftLightSensor.enableLed(true);
+                rightLightSensor.enableLed(true);
+                printOut.put("Beacon Assistant Sys", "On");
+                print(printOut);
+                sleep(500);
+                return true;
             }
         }
-
+        return false;
     }
 
     @Override
@@ -245,21 +256,12 @@ public class TeleOP extends LinearOpMode {
         printOut.put("Register the Gamepad", "Hit <Start> plus <A> for player 1");
         printOut.put("Instruction", "Left Stick: left motor; Right Stick: right motor; LT & RT: arm up/down");
         print(printOut);
-        //Initialize driving motors
-        leftFrontMotor = hardwareMap.dcMotor.get("left front motor");
-        leftBackMotor = hardwareMap.dcMotor.get("left back motor");
-        rightFrontMotor = hardwareMap.dcMotor.get("right front motor");
-        rightBackMotor = hardwareMap.dcMotor.get("right back motor");
-        //Set direction
-        leftFrontMotor.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-        rightBackMotor.setDirection(DcMotor.Direction.REVERSE);
-        telemetry.addData("Motors", "Initialized");
+        // Initialize wheel motors
+        initMotors();
         //Initialize arm motor and intake motor
         boolean isArmIntake = initArmMotor();
         //Initialize gyro
-        boolean isGyro = initgyro();
+        boolean isGyro = initGyro();
         //Initialize Color sensor
         boolean isColorSensor = initColorSensor();
         //Initialize Light sensor
@@ -273,8 +275,8 @@ public class TeleOP extends LinearOpMode {
         };
 
         boolean isMoving = false;
-        boolean isIntakeMotor = false;
-        boolean beaconAssistantSystem = false;
+        boolean isIntakeOn = false;
+        boolean isBeaconAssistantSystem = false;
         int approachDirection = 0;
         boolean emergencyQuit = false;
         double emergencyBreakTime = 0.0;
@@ -295,23 +297,33 @@ public class TeleOP extends LinearOpMode {
             printOut.put("Left Motor Speed", String.valueOf(power[0] * 100) + "%");
             printOut.put("Right Motor Speed", String.valueOf(power[2] * 100) + "%");
             print(printOut);
-            armMotor.setPower((gamepad1.right_trigger > 0) ? (gamepad1.right_trigger) :
+
+            if (isArmIntake){
+                armMotor.setPower((gamepad1.right_trigger > 0) ? (gamepad1.right_trigger) :
                     (- gamepad1.left_trigger));
+            }
 
             //Intake motor power
-            runIntakeMotor(isArmIntake, isIntakeMotor);
-            // Light sensor power
-            runLightSensors(isColorSensor, isLightSensor, beaconAssistantSystem);
+            if (gamepad1.a){
+                isIntakeOn = runIntakeMotor(isArmIntake, isIntakeOn, true);
+            }else if (gamepad1.b){
+                isIntakeOn = runIntakeMotor(isArmIntake, isIntakeOn, false);
+            }
+
+            //Beacon Assistant System Control
+            if (gamepad1.x) {
+                isBeaconAssistantSystem = beaconAssistantSystem(isColorSensor, isLightSensor, isBeaconAssistantSystem);
+            }
 
             if (-gamepad1.left_stick_y != 0 || -gamepad1.right_stick_y != 0) {
-                if (!beaconAssistantSystem) {
-                    power[0] = gamepad1.left_stick_y / 2;
-                    power[1] = gamepad1.left_stick_y / 2;
-                    power[2] = gamepad1.right_stick_y / 2;
-                    power[3] = gamepad1.right_stick_y / 2;
+                if (!isBeaconAssistantSystem) {
+                    power[0] = -gamepad1.left_stick_y /2;
+                    power[1] = -gamepad1.left_stick_y /2;
+                    power[2] = -gamepad1.right_stick_y /2;
+                    power[3] = -gamepad1.right_stick_y /2;
                     drive(power);
                     isMoving = true;
-                } else if (beaconAssistantSystem) {
+                } else if (isBeaconAssistantSystem) {
                     //Need to add a escape method!!!
                     if (emergencyQuit && runtime.seconds() > emergencyBreakTime) {
                         emergencyBreakTime = 0;

@@ -42,7 +42,6 @@ import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import java.sql.Time;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
  * class is instantiated on the Robot Controller and executed.
  *
- * This particular OpMode just executes a basic Tank Drive Teleop for a PushBot
+ * This particular OpMode just executes a basic Tank drive Teleop for a PushBot
  * It includes all the skeletal structure that all linear OpModes contain.
  *
  * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
@@ -68,13 +67,13 @@ public class Red_side extends LinearOpMode {
     DcMotor rightFrontMotor = null;
     DcMotor rightBackMotor = null;
     DcMotor armMotor = null;
-    DcMotor IntakeMotor = null;
-    GyroSensor Gyro = null;
-    ColorSensor LeftColorSensor = null;
-    ColorSensor RightColorSensor = null;
-    LightSensor LeftLightSensor = null;
-    LightSensor RightLightSensor = null;
-    UltrasonicSensor FrontUltrasonicSensor = null;
+    DcMotor intakeMotor = null;
+    GyroSensor gyro = null;
+    ColorSensor leftColorSensor = null;
+    ColorSensor rightColorSensor = null;
+    LightSensor leftLightSensor = null;
+    LightSensor rightLightSensor = null;
+    UltrasonicSensor frontUltrasonicSensor = null;
 
     //Car dimensions and locations of color sensors and light sensors
     int CarWidth = 0;
@@ -88,25 +87,25 @@ public class Red_side extends LinearOpMode {
     int RightLightSensorX = 0;
     int RightLightSensorY = 0;
 
-    private void Drive(double[] Powerlist){
+    private void drive(double[] Powerlist){
         leftFrontMotor.setPower(Powerlist[0]);
         leftBackMotor.setPower(Powerlist[0]);
         rightFrontMotor.setPower(Powerlist[1]);
         rightBackMotor.setPower(Powerlist[1]);
     };
-    private void ShiftLeft(double[] PowerArray){
+    private void shiftLeft(double[] PowerArray){
         leftFrontMotor.setPower(PowerArray[0]);
         leftBackMotor.setPower(-PowerArray[1]);
         rightFrontMotor.setPower(-PowerArray[2]);
         rightBackMotor.setPower(PowerArray[3]);
     };
-    private void ShiftRight(double[] PowerArray){
+    private void shiftRight(double[] PowerArray){
         leftFrontMotor.setPower(-PowerArray[0]);
         leftBackMotor.setPower(PowerArray[1]);
         rightFrontMotor.setPower(PowerArray[2]);
         rightBackMotor.setPower(-PowerArray[3]);
     };
-    private boolean HitWhiteLine(ColorSensor colorSensor){
+    private boolean hitWhiteLine(ColorSensor colorSensor){
         float hsvValues[] = {0F,0F,0F};
         Color.RGBToHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsvValues);
         return hsvValues[2]>0.94;
@@ -132,42 +131,42 @@ public class Red_side extends LinearOpMode {
             throw new InterruptedException();
         };
         //Initialize arm motor and intake motor
-        boolean ArmIntakeMotorInitialized = false;
+        boolean armIntakeMotorInitialized = false;
         try{
             armMotor = hardwareMap.dcMotor.get("arm motor");
-            IntakeMotor = hardwareMap.dcMotor.get("intake motor");
-            ArmIntakeMotorInitialized = true;
+            intakeMotor = hardwareMap.dcMotor.get("intake motor");
+            armIntakeMotorInitialized = true;
             telemetry.addData("Shooter","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Warning", "Unable to access Intake motor or Arm motor!");
             telemetry.addData("Error Message",E.getMessage());
         };
-        //Initialize Gyro
-        boolean GyroInitialized = false;
+        //Initialize gyro
+        boolean gyroInitialized = false;
         try{
-            Gyro = hardwareMap.gyroSensor.get("Gyro");
-            Gyro.calibrate();
+            gyro = hardwareMap.gyroSensor.get("gyro");
+            gyro.calibrate();
             TimeUnit.MILLISECONDS.sleep(1500);
-            GyroInitialized = true;
-            telemetry.addData("Gyro sensor","Initialized");
+            gyroInitialized = true;
+            telemetry.addData("gyro sensor","Initialized");
         }
         catch (Exception E){
-            telemetry.addData("Warning", "Unable to access Gyro");
+            telemetry.addData("Warning", "Unable to access gyro");
             telemetry.addData("Error Message",E.getMessage());
         };
         //Initialize Color sensor
-        boolean ColorSensorInitialized=false;
+        boolean colorSensorInitialized=false;
         try{
-            LeftColorSensor = hardwareMap.colorSensor.get("left color sensor");
-            RightColorSensor = hardwareMap.colorSensor.get("right color sensor");
+            leftColorSensor = hardwareMap.colorSensor.get("left color sensor");
+            rightColorSensor = hardwareMap.colorSensor.get("right color sensor");
             //Test Color sensors if connect
-            LeftColorSensor.enableLed(true);
-            RightColorSensor.enableLed(true);
+            leftColorSensor.enableLed(true);
+            rightColorSensor.enableLed(true);
             TimeUnit.MILLISECONDS.sleep(1000);
-            LeftColorSensor.enableLed(false);
-            RightColorSensor.enableLed(false);
-            ColorSensorInitialized=true;
+            leftColorSensor.enableLed(false);
+            rightColorSensor.enableLed(false);
+            colorSensorInitialized=true;
             telemetry.addData("Color sensors","Initialized");
         }
         catch (Exception E){
@@ -175,36 +174,36 @@ public class Red_side extends LinearOpMode {
             telemetry.addData("Error Message",E.getMessage());
         }
         //Initialize Light sensor
-        boolean LightSensorInitialized=false;
+        boolean lightSensorInitialized=false;
         try{
-            LeftLightSensor = hardwareMap.lightSensor.get("left light sensor");
-            RightLightSensor = hardwareMap.lightSensor.get("right light sensor");
+            leftLightSensor = hardwareMap.lightSensor.get("left light sensor");
+            rightLightSensor = hardwareMap.lightSensor.get("right light sensor");
             //Test Light sensors if connect
-            LeftLightSensor.enableLed(true);
-            RightLightSensor.enableLed(true);
+            leftLightSensor.enableLed(true);
+            rightLightSensor.enableLed(true);
             TimeUnit.MILLISECONDS.sleep(1000);
-            LeftLightSensor.enableLed(false);
-            RightLightSensor.enableLed(false);
-            LightSensorInitialized=true;
+            leftLightSensor.enableLed(false);
+            rightLightSensor.enableLed(false);
+            lightSensorInitialized=true;
             telemetry.addData("Light sensors","Initialized");
         }
         catch (Exception E){
             telemetry.addData("Warning", "Unable to access Light sensor!");
             telemetry.addData("Error Message",E.getMessage());
         };
-        if (ColorSensorInitialized&&LightSensorInitialized){
+        if (colorSensorInitialized&&lightSensorInitialized){
             //Calculate the specific scale of speed
-            double[] LeftColorSensorBased = {0,0,0,0};
-            double[] RightColorSensorBased = {0,0,0,0};
-            double[] LeftLightSensorBased = {0,0,0,0};
-            double[] RightLightSensorBased = {0,0,0,0};
+            double[] leftColorSensorBased = {0,0,0,0};
+            double[] rightColorSensorBased = {0,0,0,0};
+            double[] leftLightSensorBased = {0,0,0,0};
+            double[] rightLightSensorBased = {0,0,0,0};
         }
         //Initialize Ultrasonic distance sensor
-        boolean UltrasonicSensorInitialized = false;
+        boolean ultrasonicSensorInitialized = false;
         try{
-            FrontUltrasonicSensor = hardwareMap.ultrasonicSensor.get("distance sensor");
-            if (FrontUltrasonicSensor.getUltrasonicLevel()>=0.0){
-                UltrasonicSensorInitialized = true;
+            frontUltrasonicSensor = hardwareMap.ultrasonicSensor.get("distance sensor");
+            if (frontUltrasonicSensor.getUltrasonicLevel()>=0.0){
+                ultrasonicSensorInitialized = true;
                 telemetry.addData("Ultrasonic sensor","Initialized");
             }
         }
@@ -212,7 +211,7 @@ public class Red_side extends LinearOpMode {
             telemetry.addData("Warning", "Unable to access Ultrasonic sensor!");
             telemetry.addData("Error Message",E.getMessage());
         }
-        double[] PowerArray = {
+        double[] power = {
                 0.0,  //Left front
                 0.0,  //Left back
                 0.0,  //Right front
@@ -225,31 +224,31 @@ public class Red_side extends LinearOpMode {
         runtime.reset();
         //Task 1: Beacon
         boolean Task1Complete = false;
-        if (ColorSensorInitialized&&LightSensorInitialized){
-            if (UltrasonicSensorInitialized){
+        if (colorSensorInitialized&&lightSensorInitialized){
+            if (ultrasonicSensorInitialized){
                 //Go do the beacon with ultrasonic sensor
-                for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
-                Drive(PowerArray);
+                for (int i=0;i<4;i++){power[i] = 0.35;};
+                drive(power);
                 TimeUnit.MILLISECONDS.sleep(750);
-                for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
-                Drive(PowerArray);
+                for (int i=0;i<4;i++){power[i] = 0.0;}
+                drive(power);
                 //Turn Right
-                PowerArray[0] = 0.35;
-                PowerArray[1] = 0.35;
-                PowerArray[3] = 0.2;
-                Drive(PowerArray);
+                power[0] = 0.35;
+                power[1] = 0.35;
+                power[3] = 0.2;
+                drive(power);
                 TimeUnit.MILLISECONDS.sleep(500); //Need to adjust the time!
-                for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
-                Drive(PowerArray);
+                for (int i=0;i<4;i++){power[i] = 0.0;}
+                drive(power);
                 //Go straight until hit the wall
-                for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
-                Drive(PowerArray);
-                while (FrontUltrasonicSensor.getUltrasonicLevel()>25){};
-                for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
-                Drive(PowerArray);
+                for (int i=0;i<4;i++){power[i] = 0.35;};
+                drive(power);
+                while (frontUltrasonicSensor.getUltrasonicLevel()>25){};
+                for (int i=0;i<4;i++){power[i] = 0.0;}
+                drive(power);
                 //Shift left until hit white line
-                for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
-                ShiftLeft(PowerArray);
+                for (int i=0;i<4;i++){power[i] = 0.35;}
+                shiftLeft(power);
                 double begin_time = runtime.seconds();
                 boolean HeadingLeft = true;
                 boolean RightSideOfLine = true;
@@ -260,44 +259,61 @@ public class Red_side extends LinearOpMode {
                 boolean LeftLightSensorDetectedLine = false;
                 int RetryCount = 0;
                 while (true){
-                    if (HitWhiteLine(LeftColorSensor)){
+                    if (hitWhiteLine(leftColorSensor)){
                         LeftColorSensorDetectedLine = true;
                         if (HeadingLeft) {
-                            //Park the back, toward left
-                            PowerArray[0] = 0.0;
-                            PowerArray[1] = -0.1;
-                            PowerArray[2] = -0.35;
-                            PowerArray[3] = -0.35;
+                            //Park the back, head left
+                            power[0] = 0.0;
+                            power[1] = -0.1;
+                            power[2] = -0.35;
+                            power[3] = -0.35;
                         }
                         else if (!HeadingLeft){
-                            //Park the back, toward right
-                            PowerArray[0] = 0.0;
-                            PowerArray[1] = 0.1;
-                            PowerArray[2] = 0.35;
-                            PowerArray[3] = 0.35;
+                            //Park the back, head right
+                            power[0] = 0.0;
+                            power[1] = 0.1;
+                            power[2] = 0.35;
+                            power[3] = 0.35;
                         }
-                        Drive(PowerArray);
-                        while (LeftLightSensor.getLightDetected() < 0.9){};
-                        for (int i=0;i<4;i++){PowerArray[i] = 0.0;}
-                        Drive(PowerArray);
+                        drive(power);
+                        while (leftLightSensor.getLightDetected() < 0.9){};
+                        for (int i=0;i<4;i++){power[i] = 0.0;}
+                        drive(power);
                         break;
                     }
-                    else if (HitWhiteLine(RightColorSensor)){
+                    else if (hitWhiteLine(rightColorSensor)){
                         RightColorSensorDetectedLine = true;
                         if (HeadingLeft){
                             //Already run pass the white line
+                            for (int i=0;i<4;i++){power[i] = 0.35;}
+                            shiftRight(power);
+                            HeadingLeft= false;
+                            RetryCount+=1;
+                        }else if(!HeadingLeft){
+                            // Continue till the car is on the left side
+                            continue;
                         }
                     }
-                    else if (LeftLightSensor.getLightDetected() > 0.9){
+                    else if (leftLightSensor.getLightDetected() > 0.9){
                         LeftLightSensorDetectedLine = true;
                         if (HeadingLeft&&!LeftColorSensorDetectedLine) {
                             //Car head right, on the left side of the line, and head needs to shift left to straight up
+                            power[0] = 0.0;
+                            power[1] = -0.1;
+                            power[2] = 0.1;
+                            power[3] = 0.1;
+                            drive(power);
                         }
                         else if (!HeadingLeft&&!LeftColorSensorDetectedLine){
                             //Car head left, on the left side of the line, and head needs to shift right to straight up
+                            power[0] = -0.1;
+                            power[1] = 0.0;
+                            power[2] = -0.1;
+                            power[3] = -0.1;
+                            drive(power);
                         }
                     }
-                    else if (RightLightSensor.getLightDetected() > 0.9){
+                    else if (rightLightSensor.getLightDetected() > 0.9){
                         RightLightSensorDetectedLine = true;
                         if (HeadingLeft&&RightColorSensorDetectedLine){
                             //The car pass the line with head towards left
@@ -312,15 +328,15 @@ public class Red_side extends LinearOpMode {
                         RightLightSensorDetectedLine = false;
                         LeftColorSensorDetectedLine = false;
                         LeftLightSensorDetectedLine = false;
-                        for (int i=0;i<4;i++){PowerArray[i] = 0.35;};
-                        Drive(PowerArray);
+                        for (int i=0;i<4;i++){power[i] = 0.35;};
+                        drive(power);
                         TimeUnit.MILLISECONDS.sleep(500);
                         if (HeadingLeft){
-                            ShiftRight(PowerArray);
+                            shiftRight(power);
                             HeadingLeft = false;
                         }
                         else if (!HeadingLeft){
-                            ShiftLeft(PowerArray);
+                            shiftLeft(power);
                             HeadingLeft = true;
                         }
                         RetryCount+=1;
@@ -336,12 +352,12 @@ public class Red_side extends LinearOpMode {
                     Task1Complete = true;
                 }
             }
-            else if (!UltrasonicSensorInitialized){
-                if (GyroInitialized){
+            else if (!ultrasonicSensorInitialized){
+                if (gyroInitialized){
                     //Go do the beacon with gyro without ultrasonic sensor
                     Task1Complete = true;
                 }
-                else if (!GyroInitialized){
+                else if (!gyroInitialized){
                     //Go to the beacon in blind mode
                     //If cannot hit the white line, give up
                 }
@@ -352,7 +368,7 @@ public class Red_side extends LinearOpMode {
             //Find the blue/red line, and hit the ball
         }
         else if (!Task1Complete){
-            if (ColorSensorInitialized&&LightSensorInitialized){
+            if (colorSensorInitialized&&lightSensorInitialized){
                 //Go straight, Find the line, And hit the ball
             }
         }
